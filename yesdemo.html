@@ -1,0 +1,183 @@
+<html lang="en"><head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="X-UA-Compatible" content="IE=11">
+    <meta http-equiv="X-UA-Compatible" content="IE=10">
+    <meta http-equiv="X-UA-Compatible" content="IE=9">
+    	<meta name="referrer" content="no-referrer">
+         <link rel="stylesheet" ref="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,300&amp;subset=latin,cyrillic" rel="stylesheet" type="text/css">
+    <link href="https://cdn.jsdelivr.net/fontawesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="https://assets.dialogflow.com/common/website-poly.min.css" rel="stylesheet" type="text/css">
+   <!-- <meta charset="utf-8">-->
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>   <!-- <meta charset="utf-8">-->
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <title>Yes Bank</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <link href="UI/libs/jquery-ui.min.css" rel="stylesheet">
+  <link href="UI/chatWindow.css" rel="stylesheet"> 
+   <link href="../libs/purejscarousel.css" rel="stylesheet">
+      <link href="UI-JAVASCRIPT/custom/customTemplate.css" rel="stylesheet">
+    <script src="UI/libs/jquery.js"></script>
+   <script src="UI/libs/jquery-ui.min.js"></script>
+   <script src="UI/libs/jquery.tmpl.min.js"></script>
+   <script src="UI/libs/moment.js"></script>
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/2.4.1/lodash.min.js"></script>
+   <script src="../libs/anonymousassertion.js"></script>
+   <script src="../kore-bot-sdk-client.js"></script>
+   <script src="UI/chatWindow.js"></script>
+   <script src="../libs/emoji.js" type="text/javascript"></script>
+   <script src="../libs/recorder.js" type="text/javascript"></script>
+   <script src="../libs/recorderWorker.js" type="text/javascript"></script>
+   <script src="../libs/purejscarousel.js" type="text/javascript"></script>
+   <script src="custom/customTemplate.js" type="text/javascript"></script>
+  <script type="text/javascript">
+  $(document).on("ready", function() {
+
+    function koreGenerateUUID() {
+      console.info("generating UUID");
+      var d = new Date().getTime();
+      if (window.performance && typeof window.performance.now === "function") {
+        d += performance.now(); //use high-precision timer if available
+      }
+      var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = (d + Math.random() * 16) % 16 | 0;
+        d = Math.floor(d / 16);
+        return (c == 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+      });
+      return uuid;
+    }
+
+    function assertion(options, callback) {
+
+      var korecookie = localStorage.getItem("korecom");
+      var uuid = (korecookie) || koreGenerateUUID();
+      console.log(uuid);
+
+      localStorage.setItem("korecom", uuid);
+
+      var jsonData = {
+        "clientId": botOptions.clientId,
+        "clientSecret": "K/8KbzjLhkC2e6LrNv5f0MiFyM6ZwFntNGcGpBRMC7Y=",
+        "identity": uuid,
+        "aud": "https://idproxy.kore.com/authorize",
+        "isAnonymous": true
+      };
+      $.ajax({
+        // url: botOptions.koreAPIUrl + "users/sts",
+        url: "https://vasthav-jwt.herokuapp.com/kore",
+        type: 'post',
+        data: jsonData,
+        dataType: 'json',
+        success: function(data) {
+          options.assertion = data.jwt;
+          options.handleError = koreBot.showError;
+          options.botDetails = koreBot.botDetails;
+          callback(null, options);
+          setTimeout(function() {
+            if (koreBot && koreBot.initToken) {
+              koreBot.initToken(options);
+            }
+          }, 2000);
+        },
+        error: function(err) {
+          koreBot.showError(err.responseText);
+        }
+      });
+    }
+
+    var botOptions = {};
+    botOptions.logLevel = 'debug';
+    botOptions.koreAPIUrl = "https://bots.kore.ai/api/";
+   // botOptions.koreSpeechAPIUrl = "https://speech.kore.ai/";
+    //botOptions.bearer = "bearer xyz-------------------";
+  //  botOptions.ttsSocketUrl = 'wss://speech.kore.ai/tts/ws';
+   // botOptions.userIdentity = 'userIdentity'; // Provide users email id here
+  //  botOptions.recorderWorkerPath = '../libs/recorderWorker.js';
+    botOptions.assertionFn = assertion;
+    botOptions.koreAnonymousFn = koreAnonymousFn;
+    botOptions.clientId = "cs-b404c28d-20c1-5a5e-8f73-8e5088587f24"; // secure client-id
+    botOptions.botInfo = { name: "samplebot", "_id": "st-9889dfff-6e56-5ee0-9da7-f1b430f53bfb" }; // bot name is case sensitive
+
+    var chatConfig = {
+      botOptions: botOptions,
+      allowIframe: true,
+      isSendButton: false,
+      isTTSEnabled: true,
+      isSpeechEnabled: true,
+      allowGoogleSpeech: true
+    };
+    /**
+    	allowGoogleSpeech will use Google cloud service api.
+    	Google speech key is required for all browsers except chrome.
+    	On Windows 10, Microsoft Edge will support speech recognization.
+     */
+    var koreBot = koreBotChat();
+    koreBot.show(chatConfig);
+    $('.openChatWindow').click(function() {
+      koreBotChat().show(chatConfig);
+    });
+  });
+  </script>
+<style type="text/css">
+
+#chatops-logo {
+  width: 50px;
+  height: 50px;
+  padding: 5px;
+}
+/*    body {
+    background-image: url("background.jpg");
+        background-repeat: repeat-x;
+}*/
+#wrapper:after {
+    content: initial;
+    }
+#para-text.p {}
+</style></head>
+
+
+<body> <!--;background-color: #cccccc;-->
+    <div id="wrapper">
+  <header id="header">
+        <nav class="navbar navbar-inverse" role="navigation" style="background: #ffffff;min-height: 65px;height:50px;">
+            <ul style="list-style-type: none;">
+                 <div class="" style="max-width: 20%;max-height: 20%;display: inline-block;">
+                   <a href="#"><img src="menu.jpg"></a>
+                  </div>
+
+                 <div class="" style="    margin-left: 2%;max-width: 100%;max-height: 100%;display: inline-block;">
+                    <a href="#"><img style="width: 90%;" src="yesbanklogo.jpg"></a>
+               </div>
+<!--                <li><a href="#" ><img style="padding-top:1%; width:2.2%;" src="menu.jpg" /></a></li>
+                <li><a href="#" ><img style="padding-top:1%; width:10%;" src="yesbanklogo.jpg" /></a></li>
+                -->
+                <li><div class="container" style="margin-left: 25%;margin-top: -5.5%;"> <!--style="margin-top: -5%;"-->
+                     <ul class="nav navbar-nav" style="color: antiquewhite ; width: 100%"> <!--style="margin-left: 11%;"-->
+                        <!--<li><img style="padding-top:1%; width:40%;" src="cglogo.png" /></li>-->
+                        <li><a style="font-weight: 700;color: gray;" href="#">ABOUT US<span></span></a></li>
+                        <li><a style="font-weight: 700;color: gray;" href="#">WORK WITH US<span></span></a></li>
+                        <li><a style="font-weight: 700;color: gray;" href="#">BANK WITH US<span></span></a></li>
+                        <li><a style="font-weight: 700;color: gray;" href="#">LOCATE US<span></span></a></li> 
+                         <li><a style="font-weight: 700;color: gray;" href="#">CONTACT US<span></span></a></li> 
+                         <li class="sign-up"><a style="margin-left: 100%;width: 114%;background: #da1010;text-align: center" href="#">Sign In<span></span></a></li>
+                        <!--target="_blank" &amp; -->
+                    </ul>
+                   
+                    
+                    </div>
+                </li>
+            </ul>
+        </nav>
+    </header>
+         <div class="container" style="width: 100%;padding-left: 0px;padding-right: 0px;">
+        <img src="background2.jpg" style="width:100%;">
+      </div>
+
+    </div>        
+<div class="kore-chat-window droppable ui-draggable ui-resizable">                                 <div class="minimized-title"></div>                                 <div class="minimized"><span class="messages"></span></div>     <div class="kore-chat-header">      <div class="header-title ui-draggable-handle" title="Yobot">Yobot</div>      <div class="chat-box-controls">                                                 <button class="reload-btn" title="Reconnect"><span></span></button>       <button class="minimize-btn" title="Minimize">−</button>                                                 <button class="expand-btn" title="Expand"><span class="expand-btn-span fa fa-expand"></span></button>      <button class="close-btn" title="Close">×</button>      </div>     </div>     <div class="kore-chat-body">      <div class="errorMsgBlock">      </div>      <ul class="chat-container"><li class="fromOtherUsers with-icon">        <div class="extra-info">Fri Jun 22 2018 at 2:59 pm</div>        <div class="profile-photo"> <div class="user-account avtar" style="background-image:url(https://bots.kore.ai/api/getMediaStream/market/f-f6ddda5d-87c6-55e0-ab06-e97fd0c715dc.png)"></div> </div>         <div class="messageBubble">        <div>                                                                                                                           Hey! I am <b>Yobot-Yes Bank ChatBot.</b>I am here to help you with any query you have.<br>                                                                                                                                                           </div>                                                          </div>       </li>                  </ul>     </div>                 <div class="typingIndicatorContent" style="display: none;"><div class="typingIndicator" style="background-image: url(&quot;https://bots.kore.ai/api/getMediaStream/market/f-f6ddda5d-87c6-55e0-ab06-e97fd0c715dc.png&quot;);"></div><div class="movingDots"></div></div>     <div class="kore-chat-footer"><div class="footerContainer pos-relative">          <div class="chatInputBox" contenteditable="true" placeholder="Message..."></div>                  <div class="attachment"></div>                              <div class="sdkFooterIcon ttspeakerDiv ttsOff">                     <button class="ttspeaker">                         <span class="ttsSpeakerEnable"></span>                         <span class="ttsSpeakerDisable"></span>                         <span style="display:none;"><audio id="ttspeaker" controls="" autoplay="" name="media"><source src="" type="audio/wav"></audio></span>                    </button>                 </div>                                      <div class="sdkFooterIcon microphoneBtn">                 <button class="notRecordingMicrophone">                     <i class="fa fa-microphone fa-lg"></i>                 </button>                 <button class="recordingMicrophone">                     <i class="fa fa-microphone fa-lg"></i>                     <span class="recordingGif"></span>                 </button>                 <div id="textFromServer"></div>             </div>                         <div class="sdkFooterIcon">                 <button class="sdkAttachment attachmentBtn">                     <i class="fa fa fa-paperclip"></i>                 </button>                 <input type="file" name="Attachment" class="filety" id="captureAttachmnts">             </div>    <div class="chatSendMsg">Press enter to send</div>   </div></div>         <div id="myModal" class="modalImagePreview">                      <span class="closeImagePreview">×</span>                      <img class="modal-content-imagePreview" id="img01">                      <div id="caption"></div>                </div>            <div class="ui-resizable-handle ui-resizable-n" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-e" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-w" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-s" style="z-index: 90;"></div><input type="file" multiple="false" style="display: none;"></div></body></html>
